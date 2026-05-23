@@ -39,6 +39,7 @@ export const config = {
     process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES ?? '15',
     10,
   ),
+  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
 };
 
 export default config;

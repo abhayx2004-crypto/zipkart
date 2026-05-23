@@ -1,25 +1,8 @@
-import express from "express";
 import { logger } from "@repo/logger";
-import { httpLogger } from "@repo/logger/src/middleware";
 import { config } from "./config/env.config";
-import { authRouter } from "./modules/auth/auth.route";
-import { userRouter } from "./modules/user/user.route";
-import { sessionRouter } from "./modules/session/session.route";
-import { errorHandler } from "./shared/http";
+import { createApp } from "./app";
 
-const app = express();
-
-app.use(express.json({ limit: "1mb" }));
-app.use(httpLogger);
-
-app.get("/", (req, res) => {
-  res.json({ service: "authservice", status: "ok" });
-}); 
-
-app.use("/api/auth", authRouter);
-app.use("/api/users", userRouter);
-app.use("/api/sessions", sessionRouter);
-app.use(errorHandler);
+const app = createApp();
 
 const PORT = config.port || 3000;
 

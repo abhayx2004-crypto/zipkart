@@ -6,9 +6,14 @@ import {
   sendVerificationEmail,
 } from "../../config/resend.config";
 import type { AuthenticatedRequest } from "../../middlewares/auth.middleware";
-import { createTokenPair, revokeSessionTokens } from "../../services/auth-token.service";
 import {
-  generateOpaqueToken,
+  createTokenPair,
+  getStoredRefreshToken,
+  revokeSessionTokens,
+  revokeSessionsTokens,
+  rotateRefreshToken,
+} from "../../services/auth-token.service";
+import {
   generateVerificationCode,
   hashPassword,
   hashToken,
@@ -183,71 +188,59 @@ export const refreshToken = async (req: Request, res: Response) => {
     throw new AppError(401, "Refresh token is required", "REFRESH_REQUIRED");
   }
 
-  const storedToken = await prisma.refreshToken.findUnique({
-    where: { tokenHash: hashToken(rawRefreshToken) },
-    include: { session: { include: { user: true } } },
-  });
+  const storedToken = await getStoredRefreshToken(rawRefreshToken);
 
-  if (!storedToken) {
-    throw new AppError(401, "Invalid refresh token", "INVALID_REFRESH_TOKEN");
-  }
-
-  if (storedToken.revoked) {
+  if (!storedToken.record && storedToken.rotatedSessionId) {
     await prisma.session.updateMany({
-      where: { id: storedToken.sessionId, revoked: false },
+      where: { id: storedToken.rotatedSessionId, revoked: false },
       data: { revoked: true, revokedAt: new Date() },
     });
+    await revokeSessionTokens(storedToken.rotatedSessionId);
     throw new AppError(401, "Refresh token was revoked", "REFRESH_REVOKED");
   }
 
+  if (!storedToken.record) {
+    throw new AppError(401, "Invalid refresh token", "INVALID_REFRESH_TOKEN");
+  }
+
+  const session = await prisma.session.findFirst({
+    where: {
+      id: storedToken.record.sessionId,
+    },
+    include: { user: true },
+  });
+
   if (
-    storedToken.expiresAt <= new Date() ||
-    storedToken.session.revoked ||
-    storedToken.session.expiresAt <= new Date() ||
-    !storedToken.session.user.isActive
+    !session ||
+    new Date(storedToken.record.expiresAt) <= new Date() ||
+    session.revoked ||
+    session.expiresAt <= new Date() ||
+    !session.user.isActive
   ) {
     throw new AppError(401, "Refresh token expired", "REFRESH_EXPIRED");
   }
 
-  const newRawRefreshToken = generateOpaqueToken();
-  const newRefreshTokenHash = hashToken(newRawRefreshToken);
-  const newExpiresAt = addDays(new Date(), config.refreshTokenTtlDays);
   const now = new Date();
+  const newRefreshToken = await rotateRefreshToken(
+    storedToken.tokenHash,
+    storedToken.record.sessionId,
+  );
 
-  await prisma.$transaction(async (tx) => {
-    const newToken = await tx.refreshToken.create({
-      data: {
-        sessionId: storedToken.sessionId,
-        tokenHash: newRefreshTokenHash,
-        expiresAt: newExpiresAt,
-      },
-    });
-
-    await tx.refreshToken.update({
-      where: { id: storedToken.id },
-      data: {
-        revoked: true,
-        revokedAt: now,
-        replacedByTokenId: newToken.id,
-      },
-    });
-
-    await tx.session.update({
-      where: { id: storedToken.sessionId },
-      data: { lastUsedAt: now },
-    });
+  await prisma.session.update({
+    where: { id: storedToken.record.sessionId },
+    data: { lastUsedAt: now },
   });
 
   const accessToken = signAccessToken({
-    sub: storedToken.session.user.id,
-    email: storedToken.session.user.email,
-    sessionId: storedToken.sessionId,
+    sub: session.user.id,
+    email: session.user.email,
+    sessionId: storedToken.record.sessionId,
   });
 
   sendSuccess(res, {
     tokens: {
       accessToken,
-      refreshToken: newRawRefreshToken,
+      refreshToken: newRefreshToken.token,
       accessTokenExpiresIn: config.accessTokenTtlSeconds,
     },
   });
@@ -261,7 +254,7 @@ export const logout = async (req: Request, res: Response) => {
     where: { id: auth.sessionId, userId: auth.userId, revoked: false },
     data: { revoked: true, revokedAt: now },
   });
-  await revokeSessionTokens(auth.sessionId, now);
+  await revokeSessionTokens(auth.sessionId);
 
   sendSuccess(res, { message: "Logged out successfully" });
 };
@@ -274,16 +267,11 @@ export const logoutAllDevices = async (req: Request, res: Response) => {
     select: { id: true },
   });
 
-  await prisma.$transaction([
-    prisma.session.updateMany({
-      where: { userId: auth.userId, revoked: false },
-      data: { revoked: true, revokedAt: now },
-    }),
-    prisma.refreshToken.updateMany({
-      where: { sessionId: { in: sessions.map((session) => session.id) } },
-      data: { revoked: true, revokedAt: now },
-    }),
-  ]);
+  await prisma.session.updateMany({
+    where: { userId: auth.userId, revoked: false },
+    data: { revoked: true, revokedAt: now },
+  });
+  await revokeSessionsTokens(sessions.map((session) => session.id));
 
   sendSuccess(res, { message: "Logged out from all devices" });
 };
@@ -345,6 +333,7 @@ export const resetPassword = async (req: Request, res: Response) => {
     select: { id: true },
   });
   const sessionIds = sessions.map((session) => session.id);
+  const now = new Date();
 
   await prisma.$transaction([
     prisma.passwordReset.update({
@@ -357,13 +346,10 @@ export const resetPassword = async (req: Request, res: Response) => {
     }),
     prisma.session.updateMany({
       where: { id: { in: sessionIds } },
-      data: { revoked: true, revokedAt: new Date() },
-    }),
-    prisma.refreshToken.updateMany({
-      where: { sessionId: { in: sessionIds } },
-      data: { revoked: true, revokedAt: new Date() },
+      data: { revoked: true, revokedAt: now },
     }),
   ]);
+  await revokeSessionsTokens(sessionIds);
 
   sendSuccess(res, { message: "Password reset successfully" });
 };
@@ -427,11 +413,8 @@ export const changePassword = async (req: Request, res: Response) => {
       where: { id: { in: sessionIds } },
       data: { revoked: true, revokedAt: new Date() },
     }),
-    prisma.refreshToken.updateMany({
-      where: { sessionId: { in: sessionIds } },
-      data: { revoked: true, revokedAt: new Date() },
-    }),
   ]);
+  await revokeSessionsTokens(sessionIds);
 
   sendSuccess(res, { message: "Password changed successfully" });
 };

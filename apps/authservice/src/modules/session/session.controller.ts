@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../middlewares/auth.middleware";
 import { prisma } from "../../db/prisma.db";
+import { revokeSessionTokens } from "../../services/auth-token.service";
 import { AppError, sendSuccess } from "../../shared/http";
 import { requireString } from "../../shared/validation";
 
@@ -74,15 +75,11 @@ export const revokeSession = async (
   }
 
   const now = new Date();
-  await prisma.$transaction([
-    prisma.session.update({
-      where: { id: session.id },
-      data: { revoked: true, revokedAt: now },
-    }),
-    prisma.refreshToken.updateMany({
-      where: { sessionId: session.id, revoked: false },
-      data: { revoked: true, revokedAt: now },
-    }),
-  ]);
+  await prisma.session.update({
+    where: { id: session.id },
+    data: { revoked: true, revokedAt: now },
+  });
+  await revokeSessionTokens(session.id);
+
   sendSuccess(res, { message: "Session revoked successfully" });
 };

@@ -1,0 +1,21 @@
+{
+  "name": "@repo/redis",
+  "version": "1.0.0",
+  "description": "Redis client for the application",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "tsc": "^2.0.4",
+    "typescript": "^5.9.2",
+      "@repo/typescript-config": "*",
+    "@repo/eslint-config": "*"
+  },
+  "dependencies": {
+    "ioredis": "^5.10.1"
+   
+  }
+}
