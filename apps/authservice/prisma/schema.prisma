@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id              String              @id @default(uuid()) @db.Uuid
+  email           String              @unique
+  passwordHash    String              @map("password_hash")
+  isVerified      Boolean             @default(false) @map("is_verified")
+  isActive        Boolean             @default(true) @map("is_active")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  sessions        Session[]
+  emailTokens     EmailVerification[]
+  passwordResets  PasswordReset[]
+  userRoles       UserRole[]
+
+  @@map("users")
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model Session {
+  id           String         @id @default(uuid()) @db.Uuid
+  userId       String         @map("user_id") @db.Uuid
+  deviceName   String?        @map("device_name")
+  ipAddress    String?        @map("ip_address")
+  userAgent    String?        @map("user_agent")
+  expiresAt    DateTime       @map("expires_at")
+  revoked      Boolean        @default(false)
+  revokedAt    DateTime?      @map("revoked_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  lastUsedAt   DateTime?      @map("last_used_at")
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
+
+  @@map("sessions")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revoked])
+}
+
+model RefreshToken {
+  id               String         @id @default(uuid()) @db.Uuid
+  sessionId        String         @map("session_id") @db.Uuid
+  tokenHash        String         @unique @map("token_hash")
+  expiresAt        DateTime       @map("expires_at")
+  revoked          Boolean        @default(false)
+  revokedAt        DateTime?      @map("revoked_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  replacedByTokenId String?       @unique @map("replaced_by_token_id") @db.Uuid
+  session          Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  replacedByToken  RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id], onDelete: SetNull)
+  previousToken    RefreshToken?  @relation("RefreshTokenRotation")
+
+  @@map("refresh_tokens")
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@index([revoked])
+}
+
+model EmailVerification {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  tokenHash   String    @unique @map("token_hash")
+  expiresAt   DateTime  @map("expires_at")
+  used        Boolean   @default(false)
+  usedAt      DateTime? @map("used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([used])
+}
+
+model PasswordReset {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  tokenHash   String    @unique @map("token_hash")
+  expiresAt   DateTime  @map("expires_at")
+  used        Boolean   @default(false)
+  usedAt      DateTime? @map("used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([used])
+}
+
+model Role {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  userRoles   UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+  @@index([roleId])
+}
