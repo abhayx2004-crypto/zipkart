@@ -61,8 +61,12 @@ vi.mock("../src/db/redis.db", () => ({
   redis: redisMock,
 }));
 
-vi.mock("@repo/logger/src/middleware", () => ({
+vi.mock("@repo/logger", () => ({
   httpLogger: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 vi.mock("../src/config/resend.config", () => ({
@@ -100,12 +104,19 @@ describe("Authservice API", () => {
 
   it("GET / returns health payload", async () => {
     const { createApp } = await import("../src/app");
-    const response = await request(createApp()).get("/");
+    const response = await request(await createApp()).get("/");
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ service: "authservice", status: "ok" });
   });
 
-  it("POST /api/auth/signup creates user", async () => {
+  it("GET /docs/openapi.json returns bundled OpenAPI document", async () => {
+    const { createApp } = await import("../src/app");
+    const response = await request(await createApp()).get("/docs/openapi.json");
+    expect(response.status).toBe(200);
+    expect(response.body.openapi).toBe("3.0.3");
+  });
+
+  it("POST /signup creates user", async () => {
     const cryptoService = await import("../src/services/crypto.service");
     const { createApp } = await import("../src/app");
     vi.mocked(cryptoService.hashPassword).mockResolvedValue("hashed-password");
@@ -131,7 +142,7 @@ describe("Authservice API", () => {
       }),
     );
 
-    const response = await request(createApp()).post("/api/auth/signup").send({
+    const response = await request(await createApp()).post("/signup").send({
       email: "user@example.com",
       password: "password123",
       deviceName: "Chrome",
@@ -142,7 +153,7 @@ describe("Authservice API", () => {
     expect(response.body.data.user.email).toBe("user@example.com");
   });
 
-  it("POST /api/auth/login returns tokens", async () => {
+  it("POST /login returns tokens", async () => {
     const cryptoService = await import("../src/services/crypto.service");
     const tokenService = await import("../src/services/auth-token.service");
     const { createApp } = await import("../src/app");
@@ -164,7 +175,7 @@ describe("Authservice API", () => {
       accessTokenExpiresIn: 900,
     });
 
-    const response = await request(createApp()).post("/api/auth/login").send({
+    const response = await request(await createApp()).post("/login").send({
       email: "user@example.com",
       password: "password123",
       deviceName: "Chrome",
@@ -174,7 +185,7 @@ describe("Authservice API", () => {
     expect(response.body.data.tokens.accessToken).toBe("access");
   });
 
-  it("POST /api/auth/verify-email marks token used", async () => {
+  it("POST /verify-email marks token used", async () => {
     const cryptoService = await import("../src/services/crypto.service");
     const { createApp } = await import("../src/app");
     vi.mocked(cryptoService.hashToken).mockReturnValue("hashed-code");
@@ -182,7 +193,7 @@ describe("Authservice API", () => {
     prismaMock.emailVerification.findFirst.mockResolvedValue({ id: "ev-1" });
     prismaMock.$transaction.mockResolvedValue(undefined);
 
-    const response = await request(createApp()).post("/api/auth/verify-email").send({
+    const response = await request(await createApp()).post("/verify-email").send({
       email: "user@example.com",
       code: "123456",
     });
@@ -191,7 +202,7 @@ describe("Authservice API", () => {
     expect(response.body.data.message).toContain("verified");
   });
 
-  it("POST /api/auth/refresh-token rotates token", async () => {
+  it("POST /refresh rotates token", async () => {
     const cryptoService = await import("../src/services/crypto.service");
     const { createApp } = await import("../src/app");
     vi.mocked(cryptoService.hashToken).mockReturnValue("hashed-refresh");
@@ -211,18 +222,18 @@ describe("Authservice API", () => {
     });
     prismaMock.session.update.mockResolvedValue({});
 
-    const response = await request(createApp())
-      .post("/api/auth/refresh-token")
+    const response = await request(await createApp())
+      .post("/refresh")
       .send({ refreshToken: "old-refresh" });
 
     expect(response.status).toBe(200);
     expect(response.body.data.tokens.refreshToken).toBe("new-refresh");
   });
 
-  it("POST /api/auth/forgot-password returns generic response", async () => {
+  it("POST /forgot-password returns generic response", async () => {
     const { createApp } = await import("../src/app");
     prismaMock.user.findUnique.mockResolvedValue(null);
-    const response = await request(createApp()).post("/api/auth/forgot-password").send({
+    const response = await request(await createApp()).post("/forgot-password").send({
       email: "user@example.com",
     });
 
@@ -230,7 +241,7 @@ describe("Authservice API", () => {
     expect(response.body.data.message).toContain("If that account exists");
   });
 
-  it("POST /api/auth/reset-password resets credentials", async () => {
+  it("POST /reset-password resets credentials", async () => {
     const cryptoService = await import("../src/services/crypto.service");
     const { createApp } = await import("../src/app");
     vi.mocked(cryptoService.hashToken).mockReturnValue("reset-hash");
@@ -240,7 +251,7 @@ describe("Authservice API", () => {
     prismaMock.session.findMany.mockResolvedValue([{ id: "session-1" }]);
     prismaMock.$transaction.mockResolvedValue(undefined);
 
-    const response = await request(createApp()).post("/api/auth/reset-password").send({
+    const response = await request(await createApp()).post("/reset-password").send({
       email: "user@example.com",
       code: "123456",
       newPassword: "newpassword123",
@@ -250,10 +261,10 @@ describe("Authservice API", () => {
     expect(response.body.data.message).toContain("reset");
   });
 
-  it("POST /api/auth/resend-verification handles generic success", async () => {
+  it("POST /resend-verification handles generic success", async () => {
     const { createApp } = await import("../src/app");
     prismaMock.user.findUnique.mockResolvedValue(null);
-    const response = await request(createApp()).post("/api/auth/resend-verification").send({
+    const response = await request(await createApp()).post("/resend-verification").send({
       email: "user@example.com",
     });
 
@@ -304,36 +315,38 @@ describe("Authservice API", () => {
 
     const authHeader = { Authorization: "Bearer valid-token" };
 
-    const me = await request(createApp()).get("/api/users/me").set(authHeader);
+    const me = await request(await createApp()).get("/users/me").set(authHeader);
     expect(me.status).toBe(200);
 
-    const sessions = await request(createApp())
-      .get("/api/sessions")
+    const sessions = await request(await createApp())
+      .get("/sessions")
       .set(authHeader);
     expect(sessions.status).toBe(200);
 
-    const revoke = await request(createApp())
-      .delete("/api/sessions/another-session")
+    const revoke = await request(await createApp())
+      .delete("/sessions/another-session")
       .set(authHeader);
     expect(revoke.status).toBe(200);
 
-    const logout = await request(createApp())
-      .post("/api/auth/logout")
+    const logout = await request(await createApp())
+      .post("/logout")
       .set(authHeader);
     expect(logout.status).toBe(200);
 
-    const logoutAll = await request(createApp())
-      .post("/api/auth/logout-all")
+    const logoutAll = await request(await createApp())
+      .post("/logout-all")
       .set(authHeader);
     expect(logoutAll.status).toBe(200);
 
     const cryptoServiceForChange = await import("../src/services/crypto.service");
     vi.mocked(cryptoServiceForChange.verifyPassword).mockResolvedValue(true);
     vi.mocked(cryptoServiceForChange.hashPassword).mockResolvedValue("new-hash");
-    const changePassword = await request(createApp())
-      .post("/api/auth/change-password")
+    const changePassword = await request(await createApp())
+      .post("/change-password")
       .set(authHeader)
       .send({ currentPassword: "oldpassword", newPassword: "newpassword123" });
     expect(changePassword.status).toBe(200);
   });
 });
+
+

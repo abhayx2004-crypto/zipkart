@@ -40,7 +40,7 @@ export const config = {
     10,
   ),
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  gatewaySharedSecret: process.env.GATEWAY_SHARED_SECRET,
 };
 
 export default config;
-

@@ -1,0 +1,16 @@
+post:
+  tags:
+    - Auth
+  summary: Logout current session
+  security:
+    - bearerAuth: []
+  responses:
+    "200":
+      description: Logged out
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/SuccessEnvelope.yaml"
+    "401":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+

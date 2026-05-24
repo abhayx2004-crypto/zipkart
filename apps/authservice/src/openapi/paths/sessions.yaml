@@ -1,0 +1,32 @@
+get:
+  tags:
+    - Sessions
+  summary: List active sessions for current user
+  security:
+    - bearerAuth: []
+  responses:
+    "200":
+      description: Active sessions list
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "../schemas/SuccessEnvelope.yaml"
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      currentSessionId:
+                        type: string
+                        format: uuid
+                      sessions:
+                        type: array
+                        items:
+                          $ref: "../schemas/Session.yaml"
+                    required:
+                      - currentSessionId
+                      - sessions
+    "401":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+

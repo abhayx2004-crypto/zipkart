@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: Zipkart Auth Service API
+  version: 1.0.0
+  description: Authentication, user profile, and session management APIs for authservice.
+
+servers:
+  - url: http://localhost:8000
+    description: Authservice direct
+  - url: http://localhost/api/auth
+    description: Gateway v1-style auth entrypoint
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Sessions
+
+paths:
+  /:
+    $ref: "./paths/health.yaml"
+  /signup:
+    $ref: "./paths/signup.yaml"
+  /login:
+    $ref: "./paths/login.yaml"
+  /verify-email:
+    $ref: "./paths/verify-email.yaml"
+  /refresh:
+    $ref: "./paths/refresh.yaml"
+  /forgot-password:
+    $ref: "./paths/forgot-password.yaml"
+  /reset-password:
+    $ref: "./paths/reset-password.yaml"
+  /resend-verification:
+    $ref: "./paths/resend-verification.yaml"
+  /logout:
+    $ref: "./paths/logout.yaml"
+  /logout-all:
+    $ref: "./paths/logout-all.yaml"
+  /change-password:
+    $ref: "./paths/change-password.yaml"
+  /users/me:
+    $ref: "./paths/users-me.yaml"
+  /sessions:
+    $ref: "./paths/sessions.yaml"
+  /sessions/{sessionId}:
+    $ref: "./paths/sessions-by-id.yaml"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "./components/security.yaml#/bearerAuth"
+  responses:
+    ErrorResponse:
+      $ref: "./components/responses.yaml#/ErrorResponse"
+  schemas:
+    Role:
+      $ref: "./schemas/Role.yaml"
+    User:
+      $ref: "./schemas/User.yaml"
+    Session:
+      $ref: "./schemas/Session.yaml"
+    Tokens:
+      $ref: "./schemas/Tokens.yaml"
+    SuccessEnvelope:
+      $ref: "./schemas/SuccessEnvelope.yaml"
+    ErrorEnvelope:
+      $ref: "./schemas/ErrorEnvelope.yaml"
+    SignupRequest:
+      $ref: "./schemas/SignupRequest.yaml"
+    LoginRequest:
+      $ref: "./schemas/LoginRequest.yaml"
+    VerifyEmailRequest:
+      $ref: "./schemas/VerifyEmailRequest.yaml"
+    RefreshRequest:
+      $ref: "./schemas/RefreshRequest.yaml"
+    ForgotPasswordRequest:
+      $ref: "./schemas/ForgotPasswordRequest.yaml"
+    ResetPasswordRequest:
+      $ref: "./schemas/ResetPasswordRequest.yaml"
+    ResendVerificationRequest:
+      $ref: "./schemas/ResendVerificationRequest.yaml"
+    ChangePasswordRequest:
+      $ref: "./schemas/ChangePasswordRequest.yaml"

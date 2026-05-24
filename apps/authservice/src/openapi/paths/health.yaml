@@ -1,0 +1,20 @@
+get:
+  tags:
+    - Health
+  summary: Health check
+  responses:
+    "200":
+      description: Service status
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              service:
+                type: string
+              status:
+                type: string
+            required:
+              - service
+              - status
+

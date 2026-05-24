@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "generate": "prisma generate",
-    "build": "npm run build --workspace=@repo/logger && npm run build --workspace=@repo/redis && npm run generate && node ../../node_modules/typescript/bin/tsc",
+    "copy-openapi": "node -e \"const fs=require('fs'); const p=require('path'); fs.cpSync(p.join('src','openapi'), p.join('dist','openapi'), {recursive:true, force:true});\"",
+    "build": "npm run build --workspace=@repo/logger && npm run build --workspace=@repo/redis && npm run generate && node ../../node_modules/typescript/bin/tsc && npm run copy-openapi",
     "start": "node dist/index.js",
     "test": "vitest run"
   },
@@ -20,7 +21,9 @@
     "@types/express": "^5.0.6",
     "@types/node": "^22.19.19",
     "@types/pg": "^8.20.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/supertest": "^6.0.3",
+    "@types/yamljs": "^0.2.34",
     "eslint": "^9.39.4",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.3",
@@ -30,6 +33,7 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@repo/logger": "*",
@@ -39,6 +43,8 @@
     "express": "^5.2.1",
     "pg": "^8.21.0",
     "resend": "^6.12.3",
-    "supertest": "^7.1.4"
+    "supertest": "^7.1.4",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   }
 }

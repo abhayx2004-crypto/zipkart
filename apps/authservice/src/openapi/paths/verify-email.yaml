@@ -1,0 +1,20 @@
+post:
+  tags:
+    - Auth
+  summary: Verify user email with code
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/VerifyEmailRequest.yaml"
+  responses:
+    "200":
+      description: Email verified
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/SuccessEnvelope.yaml"
+    "400":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+

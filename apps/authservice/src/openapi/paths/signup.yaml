@@ -1,0 +1,30 @@
+post:
+  tags:
+    - Auth
+  summary: Register a new user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/SignupRequest.yaml"
+  responses:
+    "201":
+      description: User created
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "../schemas/SuccessEnvelope.yaml"
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "../schemas/User.yaml"
+                    required:
+                      - user
+    "409":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+

@@ -1,0 +1,30 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  email:
+    type: string
+    format: email
+  isVerified:
+    type: boolean
+  isActive:
+    type: boolean
+  roles:
+    type: array
+    items:
+      $ref: "./Role.yaml"
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+required:
+  - id
+  - email
+  - isVerified
+  - isActive
+  - roles
+  - createdAt
+  - updatedAt

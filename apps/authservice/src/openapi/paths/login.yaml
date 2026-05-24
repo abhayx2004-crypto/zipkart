@@ -1,0 +1,39 @@
+post:
+  tags:
+    - Auth
+  summary: Login and create a device session
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/LoginRequest.yaml"
+  responses:
+    "200":
+      description: Login successful
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "../schemas/SuccessEnvelope.yaml"
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "../schemas/User.yaml"
+                      sessionId:
+                        type: string
+                        format: uuid
+                      tokens:
+                        $ref: "../schemas/Tokens.yaml"
+                    required:
+                      - user
+                      - sessionId
+                      - tokens
+    "401":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+    "403":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+

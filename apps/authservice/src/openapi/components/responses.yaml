@@ -1,0 +1,6 @@
+ErrorResponse:
+  description: Error response
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/ErrorEnvelope.yaml"

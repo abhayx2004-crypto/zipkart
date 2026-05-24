@@ -1,0 +1,26 @@
+delete:
+  tags:
+    - Sessions
+  summary: Revoke a specific session for current user
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "200":
+      description: Session revoked
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/SuccessEnvelope.yaml"
+    "400":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+    "401":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+    "404":
+      $ref: "../components/responses.yaml#/ErrorResponse"

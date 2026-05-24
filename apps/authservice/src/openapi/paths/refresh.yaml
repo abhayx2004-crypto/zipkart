@@ -1,0 +1,29 @@
+post:
+  tags:
+    - Auth
+  summary: Rotate refresh token and issue new access token
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/RefreshRequest.yaml"
+  responses:
+    "200":
+      description: Tokens rotated
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "../schemas/SuccessEnvelope.yaml"
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      tokens:
+                        $ref: "../schemas/Tokens.yaml"
+                    required:
+                      - tokens
+    "401":
+      $ref: "../components/responses.yaml#/ErrorResponse"

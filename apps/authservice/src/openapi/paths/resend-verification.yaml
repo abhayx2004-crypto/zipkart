@@ -1,0 +1,18 @@
+post:
+  tags:
+    - Auth
+  summary: Resend verification code
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/ResendVerificationRequest.yaml"
+  responses:
+    "200":
+      description: Generic success response
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/SuccessEnvelope.yaml"
+

@@ -1,0 +1,16 @@
+post:
+  tags:
+    - Auth
+  summary: Logout from all devices
+  security:
+    - bearerAuth: []
+  responses:
+    "200":
+      description: Logged out from all sessions
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/SuccessEnvelope.yaml"
+    "401":
+      $ref: "../components/responses.yaml#/ErrorResponse"
+

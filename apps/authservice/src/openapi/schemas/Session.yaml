@@ -1,0 +1,40 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  deviceName:
+    type: string
+    nullable: true
+  ipAddress:
+    type: string
+    nullable: true
+  userAgent:
+    type: string
+    nullable: true
+  expiresAt:
+    type: string
+    format: date-time
+  revoked:
+    type: boolean
+  revokedAt:
+    type: string
+    format: date-time
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+  lastUsedAt:
+    type: string
+    format: date-time
+    nullable: true
+required:
+  - id
+  - deviceName
+  - ipAddress
+  - userAgent
+  - expiresAt
+  - revoked
+  - revokedAt
+  - createdAt
+  - lastUsedAt
