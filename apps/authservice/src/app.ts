@@ -1,5 +1,5 @@
 import express from "express";
-import { httpLogger } from "@repo/logger/src/middleware";
+import { httpLogger } from "@repo/logger";
 import { authRouter } from "./modules/auth/auth.route";
 import { userRouter } from "./modules/user/user.route";
 import { sessionRouter } from "./modules/session/session.route";
