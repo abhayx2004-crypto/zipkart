@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: Zipkart User Service API
+  version: 1.0.0
+  description: User profile APIs for userservice.
+
+servers:
+  - url: http://localhost:3001
+    description: Userservice direct
+  - url: http://localhost/api/users
+    description: Gateway user entrypoint
+
+tags:
+  - name: Health
+  - name: Users
+
+paths:
+  /:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      responses:
+        "200":
+          description: Service status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: userservice
+                  status:
+                    type: string
+                    example: ok
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user profile placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: userservice
+                  profile:
+                    nullable: true
