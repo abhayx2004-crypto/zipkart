@@ -10,6 +10,7 @@ COPY turbo.json ./
 
 # Copy apps and packages
 COPY apps ./apps
+
 COPY packages ./packages
 
 # Install dependencies

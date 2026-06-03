@@ -1,6 +1,17 @@
 import { Router } from "express";
-import { getCurrentUserProfile } from "./user.controller";
+import { asyncHandler } from "../../shared/http";
+import {
+  createUser,
+  deleteUser,
+  getUserById,
+  listUsers,
+  updateUser,
+} from "./user.controller";
 
 export const userRouter = Router();
 
-userRouter.get("/me", getCurrentUserProfile);
+userRouter.get("/", asyncHandler(listUsers));
+userRouter.post("/", asyncHandler(createUser));
+userRouter.get("/:id", asyncHandler(getUserById));
+userRouter.patch("/:id", asyncHandler(updateUser));
+userRouter.delete("/:id", asyncHandler(deleteUser));

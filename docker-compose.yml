@@ -36,6 +36,28 @@ services:
 
     restart: always
 
+  userservice:
+    build:
+      context: .
+      dockerfile: apps/userservice/Dockerfile
+
+    container_name: userservice
+
+    expose:
+      - "3001"
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    environment:
+      PORT: 3001
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${USERSERVICE_DATABASE_URL}
+      GATEWAY_SHARED_SECRET: zipkart-local-gateway-secret
+
+    restart: always
+
   nginx:
     image: nginx:1.27-alpine
     container_name: nginx-gateway

@@ -8,16 +8,72 @@ datasource db {
   provider = "postgresql"
 }
 
-model UserProfile {
-  id          String   @id @default(uuid()) @db.Uuid
-  authUserId  String   @unique @map("auth_user_id") @db.Uuid
-  firstName   String?  @map("first_name")
-  lastName    String?  @map("last_name")
-  phoneNumber String?  @map("phone_number")
-  avatarUrl   String?  @map("avatar_url")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+enum UserRoleName {
+  BUYER  @map("buyer")
+  SELLER @map("seller")
+  ADMIN  @map("admin")
+}
 
-  @@map("user_profiles")
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  email        String        @unique
+  phone        String?       @unique
+  passwordHash String        @map("password_hash")
+  fullName     String        @map("full_name")
+  avatarUrl    String?       @map("avatar_url")
+  isVerified   Boolean       @default(false) @map("is_verified")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  addresses    UserAddress[]
+  sessions     UserSession[]
+  roles        UserRole[]
+
+  @@map("users")
   @@index([createdAt])
+  @@index([isVerified])
+}
+
+model UserAddress {
+  id         String  @id @default(uuid()) @db.Uuid
+  userId     String  @map("user_id") @db.Uuid
+  label      String
+  street     String
+  city       String
+  state      String
+  country    String
+  postalCode String  @map("postal_code")
+  isDefault  Boolean @default(false) @map("is_default")
+  lat        Float?
+  lng        Float?
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_addresses")
+  @@index([userId])
+  @@index([isDefault])
+}
+
+model UserSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @unique @map("token_hash")
+  deviceInfo String?  @map("device_info")
+  ipAddress  String?  @map("ip_address")
+  expiresAt  DateTime @map("expires_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model UserRole {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  role      UserRoleName
+  createdAt DateTime     @default(now()) @map("created_at")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_roles")
+  @@unique([userId, role])
+  @@index([userId])
 }
