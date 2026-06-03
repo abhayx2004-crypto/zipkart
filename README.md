@@ -1,159 +1,238 @@
-# Turborepo starter
+# Zipkart
 
-This Turborepo starter is maintained by the Turborepo core team.
+A TypeScript-based monorepo built with Turborepo featuring an authentication service microarchitecture with Redis caching, logging, and containerized deployment.
 
-## Using this example
+## 📋 Project Overview
 
-Run the following command:
+Zipkart is a modern, scalable application built using a monorepo structure that separates applications and shared packages. It includes an authentication service, shared utilities, and infrastructure components, all containerized and orchestrated with Docker Compose.
 
-```sh
-npx create-turbo@latest
+## 🏗️ Architecture
+
+### Monorepo Structure
+
+```
+zipkart/
+├── apps/                    # Applications
+│   └── authservice/        # Authentication microservice (Express.js)
+├── packages/               # Shared packages
+│   ├── logger/            # Structured logging with Pino
+│   ├── redis/             # Redis client wrapper
+│   ├── ui/                # UI component library
+│   ├── eslint-config/     # Shared ESLint configurations
+│   └── typescript-config/ # Shared TypeScript configurations
+├── infra/                 # Infrastructure configuration
+├── docker-compose.yml     # Docker services orchestration
+├── package.json           # Root workspace configuration
+└── turbo.json             # Turborepo configuration
 ```
 
-## What's inside?
+## 🛠️ Technology Stack
 
-This Turborepo includes the following packages/apps:
+- **Runtime**: Node.js >= 18
+- **Language**: TypeScript 5.9.2
+- **Build Tool**: Turborepo 2.9.14
+- **Package Manager**: npm 11.13.0
+- **Monorepo**: npm workspaces
 
-### Apps and Packages
+### Applications
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- **authservice**: Express.js based authentication microservice with Prisma ORM, PostgreSQL, and Swagger documentation
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Shared Packages
 
-### Utilities
+- **@repo/logger**: Structured logging using Pino and Pino-HTTP
+- **@repo/redis**: Redis client wrapper using ioredis
+- **@repo/ui**: React component library
+- **@repo/eslint-config**: ESLint configurations (base, Next.js, React)
+- **@repo/typescript-config**: TypeScript configurations
 
-This Turborepo has some additional tools already setup for you:
+### Development Tools
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+- **TypeScript**: Static type checking
+- **ESLint**: Code linting
+- **Prettier**: Code formatting
+- **Vitest**: Unit testing framework
 
-### Build
+### Infrastructure
 
-To build all apps and packages, run the following command:
+- **Redis**: In-memory data store for caching
+- **PostgreSQL**: Database (via Prisma ORM)
+- **Nginx**: Reverse proxy gateway
+- **Docker**: Containerization
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## 🚀 Getting Started
 
-```sh
-cd my-turborepo
-turbo build
+### Prerequisites
+
+- Node.js 18 or higher
+- npm 11.13.0 or higher
+- Docker & Docker Compose (for containerized deployment)
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
 ```
 
-Without global `turbo`, use your package manager:
+### Development
 
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+```bash
+# Start development servers for all apps and packages
+npm run dev
+
+# Start development server for a specific app
+npx turbo dev --filter=authservice
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Building
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+```bash
+# Build all apps and packages
+npm run build
 
-```sh
-turbo build --filter=docs
+# Build a specific package
+npm run build --filter=authservice
+
+# Check types across the monorepo
+npm run check-types
 ```
 
-Without global `turbo`:
+### Code Quality
 
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
+```bash
+# Lint all code
+npm run lint
+
+# Format code with Prettier
+npm run format
 ```
 
-### Develop
+### Testing
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+# Run tests in authservice
+npm run test --workspace=authservice
 ```
 
-Without global `turbo`, use your package manager:
+## 🐳 Docker Deployment
 
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
+The repository includes a complete Docker Compose setup for local development and deployment:
+
+### Services
+
+- **redis**: Redis 7 Alpine container on port 6379
+- **authservice**: Authentication service on port 8000
+- **nginx**: Nginx gateway on port 80
+
+### Running with Docker Compose
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f authservice
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Environment Variables
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Configure via Docker Compose:
+- `PORT`: AuthService port (default: 8000)
+- `REDIS_URL`: Redis connection URL (default: redis://redis:6379)
+- `GATEWAY_SHARED_SECRET`: Shared secret for gateway authentication
 
-```sh
-turbo dev --filter=web
+## 📦 Monorepo Workspace Structure
+
+### Root Scripts
+
+All scripts run across the entire monorepo using Turborepo:
+
+- `npm run dev` - Start development mode for all workspaces
+- `npm run build` - Build all workspaces
+- `npm run lint` - Lint all workspaces
+- `npm run format` - Format all TypeScript, TSX, and Markdown files
+- `npm run check-types` - Type check all workspaces
+
+### Filtering
+
+Target specific workspaces using Turbo's filter flag:
+
+```bash
+# Run only in authservice
+npx turbo build --filter=authservice
+
+# Run in all packages starting with @repo/
+npx turbo build --filter=@repo/*
 ```
 
-Without global `turbo`:
+## 🔧 Turborepo Configuration
 
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
+The project uses Turborepo for:
+- Task orchestration and caching
+- Dependency management between packages
+- Parallel execution of build tasks
+- Remote caching support
+
+Key configurations in `turbo.json`:
+- **build**: Caches outputs to `.next/` directory
+- **lint**: Runs linting with dependency constraints
+- **check-types**: Type checking with dependency constraints
+- **dev**: Persistent development mode without caching
+
+## 📝 Development Workflow
+
+1. **Create a feature branch**: `git checkout -b feature/your-feature`
+2. **Make changes** in the relevant app or package
+3. **Format code**: `npm run format`
+4. **Lint**: `npm run lint`
+5. **Check types**: `npm run check-types`
+6. **Test**: `npm run test --workspace=<workspace-name>`
+7. **Build**: `npm run build`
+8. **Push and create a pull request**
+
+## 🐛 Troubleshooting
+
+### Dependencies not installing?
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules
+npm install
 ```
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+### Build failing?
+```bash
+# Clean build artifacts
+npx turbo clean
+npm run build
 ```
 
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
+### Docker issues?
+```bash
+# Rebuild containers
+docker-compose down
+docker-compose up --build
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## 📄 License
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+ISC
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## 👨‍💻 Contributing
 
-```sh
-turbo link
-```
+Contributions are welcome! Please ensure:
+- Code follows the ESLint and Prettier configurations
+- All tests pass
+- Types are properly defined
+- Commit messages are clear and descriptive
 
-Without global `turbo`:
+## 🔗 Useful Resources
 
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- [Turborepo Documentation](https://turborepo.dev/)
+- [Express.js Documentation](https://expressjs.com/)
+- [Prisma Documentation](https://www.prisma.io/docs/)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+- [Docker Documentation](https://docs.docker.com/)
